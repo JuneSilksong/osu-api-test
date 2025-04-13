@@ -16,19 +16,32 @@ limit = 10
 
 #print(api.user("mrekk").rank_history.data[0])
 
-class PlayerData:
+class Player:
     def __init__(self, id):
         self.id = id
         self.username = api.user(id).username
-        self.scores = api.user_scores(self.id, "best", mode="osu", limit=5)
+        self.scores = api.user_scores(self.id, "best", mode="osu", limit=100)
     
     def DisplayTopPlays(self):
         for i in range(len(self.scores)):
-            print(f"{self.scores[i].beatmapset.artist:<25} {self.scores[i].beatmapset.title:<35} {self.scores[i].pp}")
+            print(f"{self.scores[i].beatmapset.artist:<40.38} {self.scores[i].beatmapset.title:<40.38} {self.scores[i].pp}")
         
-player0 = PlayerData(7562902)
+player0 = Player(7562902)
 #print(player0.id, player0.username)
-player0.DisplayTopPlays()
+#player0.DisplayTopPlays()
+
+def GeneratePlayers(n_players): # generate players from rank 1 to n
+    PlayerList = []
+    for i in range(n_players):
+        player_id = ranking[i].user.id
+        player = Player(player_id)
+        PlayerList.append(player)
+
+    return PlayerList
+
+PlayerList = GeneratePlayers(2)
+
+PlayerList[2].DisplayTopPlays()
 
 #scores_mrekk = (api.user_scores(ranking[0].user.id, "best", mode="osu", limit=limit))
 
