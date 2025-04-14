@@ -25,7 +25,7 @@ class Player:
     def DisplayTopPlays(self):
         for i in range(len(self.scores)):
             print(f"{self.scores[i].beatmapset.artist:<40.38} {self.scores[i].beatmapset.title:<40.38} {self.scores[i].pp}")
-        
+
 def GeneratePlayers(n_players): # generate players from rank 1 to n
     PlayerList = []
     for i in range(n_players):
@@ -76,18 +76,33 @@ def ScoreRating(beatmap_id, mods):
         beatmapScore = GetCachedScore(beatmap_id, mods)
     return beatmapScore
 
+def ModListStrToInt(score):
+    modSum = 0
+    for mod in score.mods:
+        if mod.acronym == "HR":
+            modSum += 1
+        if (mod.acronym == "DT") or (mod.acronym == "NC"):
+            modSum += 2
+    return modSum
+
 def GetPlayerArchetype(Player):
     modList = GetPlayerScoreModList(Player.scores)
+    scoreList = []
     playerScore = 0.0
     for i in range(limit):
         mapScore = ScoreRating(Player.scores[i].beatmap.id, modList[i])
         playerScore += mapScore
-    return playerScore
+        scoreList.append([Player.scores[i].beatmap.id, ModListStrToInt(Player.scores[i]), mapScore])
+    return playerScore, scoreList
 
-n_players = 50
+
+n_players = 5
 PlayerList = GeneratePlayers(n_players)
 
 with open("playerarchetypes.txt", "w") as f:
     for player in PlayerList:
-        playerScore = GetPlayerArchetype(player)
-        f.write(f"{player.user.username}, {playerScore}\n")
+        playerScore, scoreList = GetPlayerArchetype(player)
+        f.write(f"{player.user.statistics.pp}, {playerScore}, {scoreList}\n",)
+
+beatmap = api.beatmap_attributes(2615748,mods="DTHR")
+print(beatmap.attributes.aim_difficulty, beatmap.attributes.speed_difficulty, beatmap.attributes.star_rating)
