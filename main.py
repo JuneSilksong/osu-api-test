@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from ossapi import Ossapi
 import pandas as pd
 import numpy as np
+import csv
+import re
 
 load_dotenv("api.env")
 
@@ -16,8 +18,8 @@ limit = 12
 
 class Player:
     def __init__(self, id):
+        self.user = api.user(id)
         self.id = id
-        self.username = api.user(id).username
         self.scores = api.user_scores(self.id, "best", mode="osu", limit=limit)
     
     def DisplayTopPlays(self):
@@ -30,40 +32,62 @@ def GeneratePlayers(n_players): # generate players from rank 1 to n
         player_id = ranking[i].user.id
         player = Player(player_id)
         PlayerList.append(player)
+        print(f"Generated player {player.user.username}")
 
     return PlayerList
-
-n_players = 100
-
-PlayerList = GeneratePlayers(n_players)
 
 def GetPlayerScoreModList(scores):
     modList = []
     for score in scores:
-        mods = ""
+        mods = "NM"
         for mod in score.mods:
             if mod.acronym == "CL":
-                mods += "NM"
                 break
             mods += mod.acronym
         modList.append(mods)
     return modList
 
+def IsCached(beatmap_id, mods):
+    f = open('beatmaps.csv', 'r')
+    beatmapsCSV = f.read()
+    stringPos = beatmapsCSV.find(f"{beatmap_id},{mods},")
+    if stringPos == -1:
+        return False
+    else:
+        return True
+
+def CacheBeatmap(beatmap_id, mods, beatmapScore):
+    with open("beatmaps.csv", "a") as f:
+        f.write(f"{beatmap_id},{mods},{beatmapScore}\n")
+
+def GetCachedScore(beatmap_id, mods):
+    f = open('beatmaps.csv', 'r')
+    beatmapsCSV = f.read()
+    beatmapString = re.search(fr"{beatmap_id},{mods},(.*?)\n", beatmapsCSV).group(1)
+    beatmapScore = float(beatmapString.split("\n")[0])
+    return beatmapScore
+
 def ScoreRating(beatmap_id, mods):
-    beatmap = api.beatmap_attributes(beatmap_id,mods=mods)
-    beatmapScore = (beatmap.attributes.aim_difficulty - beatmap.attributes.speed_difficulty) * beatmap.attributes.star_rating
+    if IsCached(beatmap_id, mods) == False:
+        beatmap = api.beatmap_attributes(beatmap_id,mods=mods)
+        beatmapScore = (beatmap.attributes.aim_difficulty - beatmap.attributes.speed_difficulty) * beatmap.attributes.star_rating
+        CacheBeatmap(beatmap_id, mods, beatmapScore)
+    else:
+        beatmapScore = GetCachedScore(beatmap_id, mods)
     return beatmapScore
 
 def GetPlayerArchetype(Player):
     modList = GetPlayerScoreModList(Player.scores)
-    #print(modList)
-    playerScore = 0
+    playerScore = 0.0
     for i in range(limit):
-        #print(Player.scores[i].beatmap.id)
         mapScore = ScoreRating(Player.scores[i].beatmap.id, modList[i])
         playerScore += mapScore
     return playerScore
 
-for player in PlayerList:
-    playerScore = GetPlayerArchetype(player)
-    print(player.username, playerScore)
+n_players = 50
+PlayerList = GeneratePlayers(n_players)
+
+with open("playerarchetypes.txt", "w") as f:
+    for player in PlayerList:
+        playerScore = GetPlayerArchetype(player)
+        f.write(f"{player.user.username}, {playerScore}\n")
