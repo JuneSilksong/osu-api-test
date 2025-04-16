@@ -47,14 +47,14 @@ def get_player_score_mod_list(scores):
         mod_list.append(mods)
     return mod_list
 
-"""def modlist_str_to_int(score):
+def modlist_str_to_int(score):
     mod_sum = 0
     for mod in score.mods:
         if mod.acronym == "HR":
             mod_sum += 1
         if (mod.acronym == "DT") or (mod.acronym == "NC"):
             mod_sum += 2
-    return mod_sum"""
+    return mod_sum
 
 def is_cached(beatmap_id, mods):
     f = open('beatmaps.csv', 'r')
@@ -92,13 +92,16 @@ def get_player_archetype(Player):
     for i in range(limit):
         beatmap_score = get_score_rating(Player.scores[i].beatmap.id, mod_list[i])
         player_score += beatmap_score
-        score_list.append([Player.scores[i].beatmap.id])
+        score_list.append(Player.scores[i].beatmap.id)
     return player_score, score_list
 
 n_players = 5
 player_list = generate_players(n_players)
 
-with open("playerarchetypes.txt", "w") as f:
+with open("player_archetypes.csv", "w") as f:
     for player in player_list:
         player_score, score_list = get_player_archetype(player)
-        f.write(f"{player.user.statistics.pp}, {player_score}, {score_list}\n",)
+        f.write(f"{player.user.statistics.pp}, {player_score}")
+        for score in score_list:
+            f.write(f", {score}",)
+        f.write("\n")
