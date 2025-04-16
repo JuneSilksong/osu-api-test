@@ -95,7 +95,7 @@ def get_player_archetype(Player):
         score_list.append(Player.scores[i].beatmap.id)
     return player_score, score_list
 
-n_players = 5
+n_players = 50
 player_list = generate_players(n_players)
 
 with open("player_archetypes.csv", "w") as f:

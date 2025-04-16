@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.preprocessing import MultiLabelBinarizer
+import joblib
 
 data = np.loadtxt("player_archetypes.csv", delimiter=",")
 
@@ -12,6 +13,9 @@ Ymat = data[:,2:]
 
 mlb = MultiLabelBinarizer()
 id_labels = mlb.fit_transform(Ymat)
+id_list = mlb.classes_
+
+np.save("id_list.npy", id_list)
 
 X_tensor = torch.tensor(Xmat, dtype=torch.float32)
 Y_tensor = torch.tensor(id_labels, dtype=torch.float32)
@@ -47,4 +51,4 @@ for epoch in range(50):
         total_loss += loss.item()
     print(total_loss)
 
-torch.save(model.state_dict(), "player_archetype_nn.pth")
+torch.save(model.state_dict(), "osu_nn.pth")
